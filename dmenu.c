@@ -41,6 +41,7 @@ static char *embed;
 static int bh, mw, mh;
 static int inputw = 0, promptw;
 static int lrpad; /* sum of left and right padding */
+static int reject_no_match = 1; /* stop taking input if no further results exist*/
 static size_t cursor;
 static struct item *items = NULL;
 static struct item *matches, *matchend;
@@ -335,12 +336,26 @@ insert(const char *str, ssize_t n)
 {
 	if (strlen(text) + n > sizeof text - 1)
 		return;
+
+	static char last[BUFSIZ] = "";
+	if(reject_no_match) {
+		/* store last text value in case we need to revert it */
+		memcpy(last, text, BUFSIZ);
+	}
+
 	/* move existing text out of the way, insert new text, and update cursor */
 	memmove(&text[cursor + n], &text[cursor], sizeof text - cursor - MAX(n, 0));
 	if (n > 0)
 		memcpy(&text[cursor], str, n);
 	cursor += n;
 	match();
+
+	if(!matches && reject_no_match) {
+		/* revert to last text value if theres no match */
+		memcpy(text, last, BUFSIZ);
+		cursor -= n;
+		match();
+	}
 }
 
 static size_t
@@ -771,7 +786,7 @@ setup(void)
 static void
 usage(void)
 {
-	fputs("usage: dmenu [-b] [-f] [-i] [-n] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
+	fputs("usage: dmenu [-bfirv] [-b] [-f] [-i] [-n] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
 	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n"
 		  "             [-hb color] [-hf color] [-hp items]\n", stderr);
 	exit(1);
@@ -799,6 +814,8 @@ main(int argc, char *argv[])
 			fstrstr = cistrstr;
       } else if (!strcmp(argv[i], "-n")) /* instant select only match */
 			instant = 1;
+        else if (!strcmp(argv[i], "-r")) /* reject input which results in no match */
+			reject_no_match = 1;
 		else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */

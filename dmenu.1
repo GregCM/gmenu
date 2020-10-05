@@ -6,6 +6,8 @@ dmenu \- dynamic menu
 .RB [ \-bfiv ]
 .RB [ \-g
 .IR columns ]
+.RB [ \-n 
+.IR instant ]
 .RB [ \-l
 .IR lines ]
 .RB [ \-m
@@ -51,6 +53,9 @@ is faster, but will lock up X until stdin reaches end\-of\-file.
 .TP
 .B \-i
 dmenu matches menu items case insensitively.
+.TP
+.B \-n
+dmenu instantly selects if only one match.
 .TP
 .BI \-g " columns"
 dmenu lists items in a grid with the given number of columns.
